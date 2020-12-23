@@ -1,9 +1,17 @@
 package main
 
 import (
+	"log"
+	"net/http"
 	"time"
 
 	"github.com/gorilla/websocket"
+)
+
+const (
+	timeAllowedWriteToPeer  = 1 * time.Second
+	timeAllowedReadFromPeer = 1 * time.Second
+	pingFrequency           = (timeAllowedReadFromPeer * 9) / 10
 )
 
 type Client struct {
@@ -11,25 +19,29 @@ type Client struct {
 	send chan []byte
 }
 
-const (
-	timeAllowedWriteToPeer      = 10 * time.Second
-	timeAllowedReadPongFromPeer = 60 * time.Second
-	pingFrequency               = (timeAllowedReadPongFromPeer * 9) / 10
-)
-
-var upgrader = websocket.Upgrader{
+var httpToWebsocket = websocket.Upgrader{
 	ReadBufferSize:  1024,
 	WriteBufferSize: 1024,
 }
 
-// registerWriter starts a ticker which keeps conn alive.
-// When the send channel receives a new message,
-// conn's writer sends it to the client.
-func (c *Client) registerWriter() {
-	ticker := time.NewTicker(pingFrequency)
+// registerPlayer launches goroutines for a reader and writer per-client
+func registerPlayer(w http.ResponseWriter, r *http.Request) {
+	log.Println("New player joined!")
+	conn, err := httpToWebsocket.Upgrade(w, r, nil)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+	}
 
+	client := &Client{conn: conn, send: make(chan []byte, 256)}
+	go client.registerWriter()
+	client.send <- []byte("hi")
+}
+
+// registerWriter sends game state to the client
+func (c *Client) registerWriter() {
+	keepAlive := time.NewTicker(pingFrequency)
 	defer func() {
-		ticker.Stop()
+		keepAlive.Stop()
 		_ = c.conn.Close()
 	}()
 
@@ -39,23 +51,13 @@ func (c *Client) registerWriter() {
 			_ = c.conn.SetWriteDeadline(time.Now().Add(timeAllowedWriteToPeer))
 			if !ok {
 				_ = c.conn.WriteMessage(websocket.CloseMessage, []byte{})
-				return
-			}
-
-			if w, err := c.conn.NextWriter(websocket.TextMessage); err != nil {
-				return
-			} else {
+			} else if w, err := c.conn.NextWriter(websocket.TextMessage); err == nil {
 				_, _ = w.Write(message)
-				if err := w.Close(); err != nil {
-					return
-				}
+				_ = w.Close()
 			}
-
-		case <-ticker.C:
+		case <-keepAlive.C:
 			_ = c.conn.SetWriteDeadline(time.Now().Add(timeAllowedWriteToPeer))
-			if err := c.conn.WriteMessage(websocket.PingMessage, nil); err != nil {
-				return
-			}
+			_ = c.conn.WriteMessage(websocket.PingMessage, nil)
 		}
 	}
 }
