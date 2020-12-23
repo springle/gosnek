@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>gosnek</title>
+    <script type="text/javascript">
+        window.onload = function () {
+            let conn = new WebSocket("ws://" + document.location.host + "/connect");
+            conn.onclose = function () {
+                console.log("Connection closed.")
+            };
+            conn.onmessage = function (evt) {
+                console.log("Received message: " + evt.data)
+            };
+        };
+    </script>
+</head>
+<body>
+</body>
+</html>
