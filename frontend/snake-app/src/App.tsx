@@ -1,26 +1,22 @@
 import React from 'react';
-import logo from './logo.svg';
 import './App.css';
+import { WelcomePage } from './components/WelcomePage';
+import { RootState } from '.';
+import { connect, ConnectedProps } from 'react-redux'
+import { ConnectionState } from './redux/types';
 
-function App() {
-  return (
-    <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.tsx</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
-    </div>
-  );
+const mapState = (state: RootState) => ({
+  game: state.game
+})
+
+const connector = connect(mapState);
+
+const App = (props: ConnectedProps<typeof connector>) => {
+  if (props.game.connectionState === ConnectionState.INIT) {
+    return <WelcomePage />;
+  }
+  else return null;
 }
 
-export default App;
+
+export default connect(mapState)(App);
