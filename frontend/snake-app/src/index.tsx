@@ -3,12 +3,15 @@ import ReactDOM from 'react-dom';
 import './index.css';
 import App from './App';
 import reportWebVitals from './reportWebVitals';
-import { reducer } from './redux/reducer';
+import { connectionStateReducer, gameStateReducer } from './redux/reducers';
 import { createStore, combineReducers } from 'redux';
 import { Provider } from 'react-redux';
+import '@blueprintjs/core/lib/css/blueprint.css';
+import 'normalize.css';
 
 const rootReducer = combineReducers({
-  game: reducer
+  gameState: gameStateReducer,
+  connectionState: connectionStateReducer
 })
 
 const store = createStore(rootReducer);

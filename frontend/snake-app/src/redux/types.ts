@@ -1,4 +1,5 @@
 export const SET_SERVER_GAME_STATE = 'SET_SERVER_GAME_STATE';
+export const SET_CONNECTION_STATE = 'SET_CONNECTION_STATE';
 
 export enum ConnectionState {
     INIT,
@@ -7,7 +8,7 @@ export enum ConnectionState {
 }
 
 export interface InternalGameState {
-    connectionState: ConnectionState;
+    snapshot?: ServerGameState;
 }
 
 export interface ServerGameState {
