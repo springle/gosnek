@@ -1,6 +1,6 @@
 import React, { CSSProperties } from 'react';
 import { ServerGameState } from '../redux/types';
-import { pickEnemyColor, playerColor } from '../util/colors';
+import { getColor } from '../util/colors';
 
 /**
  * Renders a single frame of the game.
@@ -28,7 +28,7 @@ export const Board = (snapshot: ServerGameState) => {
     snapshot.players.forEach(player => {
         player.occupies.forEach(p => {
             const key = JSON.stringify([p.x, p.y])
-            const color = player.playerId === snapshot.playerId ? playerColor : pickEnemyColor(player.playerId);
+            const color = getColor(snapshot.playerId, player.playerId);
             const value: CSSProperties = { backgroundColor: color };
             occupied.set(key, value);
         })

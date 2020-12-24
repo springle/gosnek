@@ -35,5 +35,10 @@
 }
 
 .left-sidebar {
-  background-color: lightblue;
+  display: grid;
+  grid-template-rows: 50px 1fr;
+}
+
+.snake-game-standings {
+  width: 100%;
 }

@@ -1,26 +1,16 @@
-import { Divider } from '@blueprintjs/core';
+import { Callout } from '@blueprintjs/core';
 import React from 'react';
-import { Player, ServerGameState } from '../redux/types';
+import { ServerGameState } from '../redux/types';
+import AliveBadge from './AliveBadge';
+import Standings from './Standings';
 
-const Standings = (props: {players: Player[]}) => {
-    console.log(props)
-    const elems = props.players
-        .sort((a, b) => a.occupies.length - b.occupies.length)
-        .map((p, idx) => {
-            return <li key={idx}>{p.name}, size={p.occupies.length}</li>
-        })
-    return (
-        <ol>{elems}</ol>
-    )
-}
 
 const LeftSideBar = (snapshot: ServerGameState) => {
     return (
-        <div>
-            <h1 className='bp3-heading'>Players</h1>
-            <Divider />
-            <Standings players={snapshot.players}/>
-        </div>
+        <Callout className='left-sidebar'>
+            <AliveBadge snapshot={snapshot} />
+            <Standings players={snapshot.players} myPlayerId={snapshot.playerId} />
+        </Callout>
     );
 }
 
