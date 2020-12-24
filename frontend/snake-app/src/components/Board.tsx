@@ -1,5 +1,6 @@
 import React, { CSSProperties } from 'react';
 import { ServerGameState } from '../redux/types';
+import { pickEnemyColor, playerColor } from '../util/colors';
 
 /**
  * Renders a single frame of the game.
@@ -20,24 +21,25 @@ export const Board = (snapshot: ServerGameState) => {
         const key = JSON.stringify([p.x, p.y]);
         const value: CSSProperties = { backgroundColor: 'orange' };
         occupied.set(key, value);
-    })
+    });
 
     // Adds player tiles to the 'occupied' set.
     // The current player is assigned a protected color.
     snapshot.players.forEach(player => {
         player.occupies.forEach(p => {
             const key = JSON.stringify([p.x, p.y])
-            const value: CSSProperties = { backgroundColor: 'purple' }
+            const color = player.playerId === snapshot.playerId ? playerColor : pickEnemyColor(player.playerId);
+            const value: CSSProperties = { backgroundColor: color };
             occupied.set(key, value);
         })
-    })
+    });
 
     // We define the grid style at runtime, as the size of the board is unknown until
     // a connection to the server has been established.
     const gridStyle: CSSProperties = {
         gridTemplateColumns: `repeat(${snapshot.board.width}, 1fr)`,
         gridTemplateRows: `repeat(${snapshot.board.height}, 1fr)`
-    }
+    };
 
     // Constructs the board, adding a 'snake-game-cell' for each point on the board.
     // When points appear in the 'occupied' set, we set additional CSS properties.
@@ -48,7 +50,8 @@ export const Board = (snapshot: ServerGameState) => {
             const extraStyle = occupied.get(key) ? occupied.get(key) : {};
             grid.push(<div key={key} className='snake-game-cell' style={extraStyle}></div>)
         }
-    }
+    };
+
     return (
         <div className='snake-game-container' style={gridStyle}>{grid}</div>
     );

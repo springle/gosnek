@@ -12,6 +12,7 @@ export interface InternalGameState {
 }
 
 export interface ServerGameState {
+    playerId: number;
     board: Board;
     players: Player[];
 }
@@ -23,6 +24,7 @@ export interface Board {
 };
 
 export interface Player {
+    playerId: number;
     name: string;
     occupies: Point[];
 }
