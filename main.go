@@ -10,11 +10,12 @@ func main() {
 		http.ServeFile(w, r, "test.html")
 	})
 
+	g := makeGame()
 	http.HandleFunc("/connect", func(w http.ResponseWriter, r *http.Request) {
-		registerPlayer(w, r)
+		registerPlayer(&g, w, r)
 	})
 
-	if err := http.ListenAndServe(addr(), nil); err != nil {
+	if err := http.ListenAndServe(getAddrFromEnvironment(), nil); err != nil {
 		log.Fatal(err)
 	}
 }

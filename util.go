@@ -5,7 +5,7 @@ import (
 	"os"
 )
 
-func addr() string {
+func getAddrFromEnvironment() string {
 	port := os.Getenv("PORT")
 	if port == "" {
 		port = "8080"
