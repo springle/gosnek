@@ -27,7 +27,7 @@
 .snake-game-cell {
   border-width: 1px;
   border-style: solid;
-  border-color: black;
+  border-color: grey;
 }
 
 .snake-game-food {

@@ -11,6 +11,7 @@ export const sample0 = {
     },
     players: [
         { name: 'OBAMA', occupies: [{ x: 1, y: 1 }, { x: 1, y: 2 }, { x: 1, y: 3 }] },
-        { name: 'GWB', occupies: [{ x: 10, y: 1 }, { x: 10, y: 2 }, { x: 10, y: 3 }] }
+        { name: 'GWB', occupies: [{ x: 10, y: 1 }, { x: 10, y: 2 }, { x: 10, y: 3 }] },
+        { name: 'TRUMP TRAIN CHOO CHOO', occupies: [{ x: 12, y: 1 }, { x: 12, y: 2 }, { x: 12, y: 3 }, {x: 12, y: 4}] }
     ]
 } as ServerGameState;
