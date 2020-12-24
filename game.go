@@ -1,14 +1,16 @@
 package main
 
 import (
+	"log"
 	"math/rand"
+	"strconv"
 )
 
 // makeGame initializes a new game
 func makeGame() game {
 	return game{
 		make(map[*Client]bool),
-		make(map[string]*player),
+		make(map[int]*player),
 		make(map[Point]bool),
 		make(map[Point]int),
 		100,
@@ -29,6 +31,34 @@ func (g *game) chooseEntranceSquare() Point {
 	}
 }
 
+func (g *game) addPlayer(name string) int {
+	id, head := g.choosePlayerId(), g.chooseEntranceSquare()
+	g.playersById[id] = &player{
+		name,
+		id,
+		1,
+		East,
+		0,
+		points{head, nil, nil, 1},
+	}
+
+	log.Println(name + " joined (id #" + strconv.Itoa(id) + ")!")
+	return id
+}
+
+// choosePlayerId chooses the lowest, available playerId
+func (g *game) choosePlayerId() int {
+	id := 0
+	for {
+		_, idIsTaken := g.playersById[id]
+		if !idIsTaken {
+			return id
+		}
+
+		id++
+	}
+}
+
 // broadcast sends the GameState to every Client
 func (g *game) broadcast() {
 	m := g.message()
@@ -40,15 +70,15 @@ func (g *game) broadcast() {
 // message constructs an externally consumable representation of the GameState
 func (g *game) message() GameState {
 	m := GameState{
-		make([]PlayerState, len(g.nameToPlayer)),
+		make([]PlayerState, len(g.playersById)),
 		g.boardHeight,
 		g.boardWidth,
 	}
 
 	index := 0
-	for name, player := range g.nameToPlayer {
+	for _, player := range g.playersById {
 		m.StateOfPlayers[index] = PlayerState{
-			name,
+			player.name,
 			index,
 			player.age,
 			[]Point{player.occupies.head},
@@ -63,8 +93,8 @@ func (g *game) message() GameState {
 // step progresses the game by one time unit
 // TODO: implement
 func (g *game) step() {
-	for name := range g.nameToPlayer {
-		player := g.nameToPlayer[name]
+	for name := range g.playersById {
+		player := g.playersById[name]
 		switch player {
 		}
 	}

@@ -12,16 +12,17 @@ const (
 )
 
 type game struct {
-	clientSet    map[*Client]bool
-	nameToPlayer map[string]*player
-	foodSet      map[Point]bool
-	occupiedSet  map[Point]int
-	boardHeight  int
-	boardWidth   int
+	clientSet   map[*Client]bool
+	playersById map[int]*player
+	foodSet     map[Point]bool
+	occupiedSet map[Point]int
+	boardHeight int
+	boardWidth  int
 }
 
 type player struct {
 	name     string
+	id       int
 	size     int
 	heading  int
 	age      int
@@ -41,7 +42,7 @@ type Point struct {
 }
 
 type ClientMessage struct {
-	PlayerName  string
+	PlayerId    int
 	StateOfGame GameState
 }
 
@@ -53,7 +54,7 @@ type GameState struct {
 
 type PlayerState struct {
 	Name     string
-	Uid      int
+	Id       int
 	Age      int
 	Occupies []Point
 }
@@ -61,6 +62,6 @@ type PlayerState struct {
 type Client struct {
 	g    *game
 	conn *websocket.Conn
-	name string
+	id   int
 	send chan GameState
 }

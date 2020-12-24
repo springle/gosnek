@@ -2,10 +2,7 @@ package main
 
 import (
 	"encoding/json"
-	"log"
-	"math/rand"
 	"net/http"
-	"strconv"
 	"time"
 
 	"github.com/gorilla/websocket"
@@ -22,25 +19,13 @@ var httpToWebsocket = websocket.Upgrader{
 	WriteBufferSize: 1024,
 }
 
-// registerPlayer launches goroutines for a reader and writer per-client
+// registerPlayer adds a new player to the game,
+// then launches goroutines for a new reader and writer
 func registerPlayer(g *game, w http.ResponseWriter, r *http.Request) {
-	playerName := "todo" + strconv.Itoa(rand.Intn(1000))
-	_, nameTaken := g.nameToPlayer[playerName]
-	conn, err := httpToWebsocket.Upgrade(w, r, nil)
-	if nameTaken || err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
-	} else {
-		log.Println(playerName + " joined!")
-		g.nameToPlayer[playerName] = &player{
-			playerName,
-			1,
-			East,
-			0,
-			points{g.chooseEntranceSquare(), nil, nil, 1},
-		}
-	}
-
-	client := &Client{g: g, conn: conn, name: playerName, send: make(chan GameState)}
+	playerName := getNameFromRequest(r)
+	playerId := g.addPlayer(playerName)
+	conn, _ := httpToWebsocket.Upgrade(w, r, nil)
+	client := &Client{g: g, conn: conn, id: playerId, send: make(chan GameState)}
 	g.clientSet[client] = true
 	go client.registerWriter()
 	g.broadcast()
@@ -61,7 +46,7 @@ func (c *Client) registerWriter() {
 			if !ok {
 				_ = c.conn.WriteMessage(websocket.CloseMessage, []byte{})
 			} else if w, err := c.conn.NextWriter(websocket.TextMessage); err == nil {
-				m := ClientMessage{c.name, stateOfGame}
+				m := ClientMessage{c.id, stateOfGame}
 				b, _ := json.Marshal(m)
 				_, _ = w.Write(b)
 				_ = w.Close()
@@ -71,4 +56,9 @@ func (c *Client) registerWriter() {
 			_ = c.conn.WriteMessage(websocket.PingMessage, nil)
 		}
 	}
+}
+
+func getNameFromRequest(r *http.Request) string {
+	keys, _ := r.URL.Query()["name"]
+	return keys[0]
 }
