@@ -51,17 +51,10 @@ func (g *game) chooseEntranceSquare() Point {
 	}
 }
 
+// addPlayer adds a new player to the game
 func (g *game) addPlayer(name string) int {
 	id, head := g.choosePlayerId(), g.chooseEntranceSquare()
-	g.playersById[id] = &player{
-		name,
-		id,
-		1,
-		East,
-		0,
-		[]Point{head},
-	}
-
+	g.playersById[id] = &player{name, id, 1, East, 0, []Point{head}}
 	log.Println(name + " joined (id #" + strconv.Itoa(id) + ")!")
 	return id
 }
@@ -119,10 +112,12 @@ func (g *game) step() {
 	}
 }
 
+// outOfBounds determines if a Point is on the board
 func (g *game) outOfBounds(p Point) bool {
 	return p.X < 0 || p.Y < 0 || p.X >= g.boardWidth || p.Y >= g.boardHeight
 }
 
+// occupied establishes how many times each Point is occupied by a player
 func (g *game) occupied() map[Point]int {
 	occupiedSet := make(map[Point]int)
 	for _, player := range g.playersById {
@@ -139,6 +134,7 @@ func (g *game) occupied() map[Point]int {
 	return occupiedSet
 }
 
+// print clears the console and draws the current board
 func (g *game) print() {
 	board := make([][]int, g.boardHeight)
 	for i := range board {
@@ -157,6 +153,7 @@ func (g *game) print() {
 	}
 }
 
+// grow moves player towards heading and might increase the length of occupies by 1
 func (p *player) grow(g *game) {
 	n := p.nextSquare()
 	p.occupies = append(p.occupies, n)
@@ -170,6 +167,7 @@ func (p *player) grow(g *game) {
 	}
 }
 
+// nextSquare determines player's next head location based on heading
 func (p *player) nextSquare() Point {
 	head := p.occupies[len(p.occupies)-1]
 	switch p.heading {
