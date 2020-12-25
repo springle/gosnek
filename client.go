@@ -23,9 +23,9 @@ var httpToWebsocket = websocket.Upgrader{
 // then launches goroutines for a new reader and writer
 func registerPlayer(g *game, w http.ResponseWriter, r *http.Request) {
 	playerName := getNameFromRequest(r)
-	playerId := g.addPlayer(playerName)
+	g.joinRequests <- joinRequest{playerName}
 	conn, _ := httpToWebsocket.Upgrade(w, r, nil)
-	client := &Client{g: g, conn: conn, id: playerId, send: make(chan GameState)}
+	client := &Client{g: g, conn: conn, id: -1, send: make(chan GameState)}
 	g.clientSet[client] = true
 	go client.registerWriter()
 }

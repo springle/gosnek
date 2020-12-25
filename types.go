@@ -12,12 +12,13 @@ const (
 )
 
 type game struct {
-	clientSet   map[*Client]bool
-	playersById map[int]*player
-	foodSet     map[Point]bool
-	occupiedSet map[Point]int
-	boardHeight int
-	boardWidth  int
+	clientSet    map[*Client]bool
+	playersById  map[int]*player
+	foodSet      map[Point]bool
+	occupiedSet  map[Point]int
+	joinRequests chan joinRequest
+	boardHeight  int
+	boardWidth   int
 }
 
 type player struct {
@@ -32,6 +33,10 @@ type player struct {
 type Point struct {
 	X int
 	Y int
+}
+
+type joinRequest struct {
+	name string
 }
 
 type ClientMessage struct {

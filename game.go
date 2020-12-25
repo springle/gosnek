@@ -1,8 +1,8 @@
 package main
 
 import (
+	"errors"
 	"fmt"
-	"log"
 	"math/rand"
 	"strconv"
 	"time"
@@ -10,7 +10,7 @@ import (
 
 const (
 	minSnakeLen        = 4
-	metronomeFrequency = 1 * time.Second
+	metronomeFrequency = 1000 * time.Millisecond
 )
 
 // makeGame initializes a new game
@@ -20,6 +20,7 @@ func makeGame() game {
 		make(map[int]*player),
 		make(map[Point]bool),
 		make(map[Point]int),
+		make(chan joinRequest),
 		5,
 		10,
 	}
@@ -34,29 +35,35 @@ func (g *game) run() {
 		case <-metronome.C:
 			g.step()
 			g.broadcast()
+			g.print()
+		case joinRequest := <-g.joinRequests:
+			g.addPlayer(joinRequest.name)
 		}
 	}
 }
 
 // chooseEntranceSquare picks a Point along the edge of the board,
 // which is not already occupied by another player
-func (g *game) chooseEntranceSquare() Point {
-	for {
+func (g *game) chooseEntranceSquare() (Point, error) {
+	for i := 0; i < g.boardHeight; i++ {
 		point := Point{0, rand.Intn(g.boardHeight)}
 		_, pointIsOccupied := g.occupiedSet[point]
 		if !pointIsOccupied {
 			g.occupiedSet[point] = 1
-			return point
+			return point, nil
 		}
 	}
+
+	return Point{}, errors.New("no available entrance square")
 }
 
 // addPlayer adds a new player to the game
-func (g *game) addPlayer(name string) int {
-	id, head := g.choosePlayerId(), g.chooseEntranceSquare()
-	g.playersById[id] = &player{name, id, 1, East, 0, []Point{head}}
-	log.Println(name + " joined (id #" + strconv.Itoa(id) + ")!")
-	return id
+func (g *game) addPlayer(name string) {
+	id := g.choosePlayerId()
+	head, err := g.chooseEntranceSquare()
+	if err == nil {
+		g.playersById[id] = &player{name, id, 1, East, 0, []Point{head}}
+	}
 }
 
 // choosePlayerId chooses the lowest, available playerId
@@ -106,7 +113,6 @@ func (g *game) step() {
 		head := player.occupies[len(player.occupies)-1]
 		count, ok := g.occupiedSet[head]
 		if ok && count > 1 || g.outOfBounds(head) {
-			log.Println(player.name + " has died")
 			delete(g.playersById, id)
 		}
 	}
