@@ -28,7 +28,6 @@ func registerPlayer(g *game, w http.ResponseWriter, r *http.Request) {
 	client := &Client{g: g, conn: conn, id: playerId, send: make(chan GameState)}
 	g.clientSet[client] = true
 	go client.registerWriter()
-	g.broadcast()
 }
 
 // registerWriter sends game state to the client

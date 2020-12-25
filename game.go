@@ -1,9 +1,16 @@
 package main
 
 import (
+	"fmt"
 	"log"
 	"math/rand"
 	"strconv"
+	"time"
+)
+
+const (
+	minSnakeLen        = 4
+	metronomeFrequency = 1 * time.Second
 )
 
 // makeGame initializes a new game
@@ -13,8 +20,21 @@ func makeGame() game {
 		make(map[int]*player),
 		make(map[Point]bool),
 		make(map[Point]int),
-		100,
-		100,
+		5,
+		10,
+	}
+}
+
+// run calls step and broadcast every metronomeFrequency
+func (g *game) run() {
+	metronome := time.NewTicker(metronomeFrequency)
+	defer metronome.Stop()
+	for {
+		select {
+		case <-metronome.C:
+			g.step()
+			g.broadcast()
+		}
 	}
 }
 
@@ -39,7 +59,7 @@ func (g *game) addPlayer(name string) int {
 		1,
 		East,
 		0,
-		points{head, nil, nil, 1},
+		[]Point{head},
 	}
 
 	log.Println(name + " joined (id #" + strconv.Itoa(id) + ")!")
@@ -48,7 +68,7 @@ func (g *game) addPlayer(name string) int {
 
 // choosePlayerId chooses the lowest, available playerId
 func (g *game) choosePlayerId() int {
-	id := 0
+	id := 1
 	for {
 		_, idIsTaken := g.playersById[id]
 		if !idIsTaken {
@@ -69,21 +89,11 @@ func (g *game) broadcast() {
 
 // message constructs an externally consumable representation of the GameState
 func (g *game) message() GameState {
-	m := GameState{
-		make([]PlayerState, len(g.playersById)),
-		g.boardHeight,
-		g.boardWidth,
-	}
+	m := GameState{make([]PlayerState, len(g.playersById)), g.boardHeight, g.boardWidth}
 
 	index := 0
 	for _, player := range g.playersById {
-		m.StateOfPlayers[index] = PlayerState{
-			player.name,
-			index,
-			player.age,
-			[]Point{player.occupies.head},
-		}
-
+		m.StateOfPlayers[index] = PlayerState{player.name, index, player.age, player.occupies}
 		index++
 	}
 
@@ -91,18 +101,87 @@ func (g *game) message() GameState {
 }
 
 // step progresses the game by one time unit
-// TODO: implement
 func (g *game) step() {
-	for name := range g.playersById {
-		player := g.playersById[name]
-		switch player {
+	// grow players
+	for _, player := range g.playersById {
+		player.grow(g)
+	}
+
+	// handle collisions
+	g.occupiedSet = g.occupied()
+	for id, player := range g.playersById {
+		head := player.occupies[len(player.occupies)-1]
+		count, ok := g.occupiedSet[head]
+		if ok && count > 1 || g.outOfBounds(head) {
+			log.Println(player.name + " has died")
+			delete(g.playersById, id)
 		}
 	}
 }
 
-// occupiesList converts the Linked List of occupied Points to a vanilla array
-// TODO: implement
-func (p *player) occupiesList() []Point {
-	l := make([]Point, p.occupies.len)
-	return l
+func (g *game) outOfBounds(p Point) bool {
+	return p.X < 0 || p.Y < 0 || p.X >= g.boardWidth || p.Y >= g.boardHeight
+}
+
+func (g *game) occupied() map[Point]int {
+	occupiedSet := make(map[Point]int)
+	for _, player := range g.playersById {
+		for _, p := range player.occupies {
+			count, ok := occupiedSet[p]
+			if ok {
+				occupiedSet[p] = count + 1
+			} else {
+				occupiedSet[p] = 1
+			}
+		}
+	}
+
+	return occupiedSet
+}
+
+func (g *game) print() {
+	board := make([][]int, g.boardHeight)
+	for i := range board {
+		board[i] = make([]int, g.boardWidth)
+	}
+
+	for _, player := range g.playersById {
+		for _, p := range player.occupies {
+			board[p.Y][p.X] = player.id
+		}
+	}
+
+	fmt.Print("\033[H\033[2J")
+	for i := range board {
+		fmt.Println(board[i])
+	}
+}
+
+func (p *player) grow(g *game) {
+	n := p.nextSquare()
+	p.occupies = append(p.occupies, n)
+	_, nextSquareHasFood := g.foodSet[n]
+	if len(p.occupies) > minSnakeLen {
+		if nextSquareHasFood {
+			delete(g.foodSet, n)
+		}
+
+		p.occupies = p.occupies[1:]
+	}
+}
+
+func (p *player) nextSquare() Point {
+	head := p.occupies[len(p.occupies)-1]
+	switch p.heading {
+	case East:
+		return Point{head.X + 1, head.Y}
+	case North:
+		return Point{head.X, head.Y - 1}
+	case West:
+		return Point{head.X - 1, head.Y}
+	case South:
+		return Point{head.X, head.Y + 1}
+	}
+
+	panic("Invalid Direction: " + strconv.Itoa(p.heading))
 }

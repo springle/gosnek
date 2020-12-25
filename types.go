@@ -26,14 +26,7 @@ type player struct {
 	size     int
 	heading  int
 	age      int
-	occupies points
-}
-
-type points struct {
-	head Point
-	next *points
-	prev *points
-	len  int
+	occupies []Point
 }
 
 type Point struct {

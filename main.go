@@ -15,6 +15,7 @@ func main() {
 		registerPlayer(&g, w, r)
 	})
 
+	go g.run()
 	if err := http.ListenAndServe(getAddrFromEnvironment(), nil); err != nil {
 		log.Fatal(err)
 	}
